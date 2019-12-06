@@ -30,12 +30,22 @@ fn main() {
     println!("input file is: {}", filename);
     let file_content = fs::read_to_string(filename).expect("Could not open input file");
 
-    let mut input_sequence: Vec<i32> = file_content
+    let input_sequence: Vec<i32> = file_content
         .split(',')
         .map(|x| i32::from_str_radix(x, 10).unwrap())
         .collect();
 
-    get_mutated_sequence(&mut input_sequence);
+    for noun in 0..99 {
+        for verb in 0..99 {
+            let mut test_sequence = input_sequence.clone();
+            test_sequence[1] = noun;
+            test_sequence[2] = verb;
+            get_mutated_sequence(&mut test_sequence);
+            if test_sequence[0] == 19690720 {
+                println!("Noun: {}, Verb: {}", noun, verb);
+            }
+        }
+    }
 
     println!("{:?}", input_sequence);
 }
