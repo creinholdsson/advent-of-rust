@@ -15,6 +15,10 @@ enum Instruction {
     Multiply,
     Input,
     Output,
+    JumpIfTrue,
+    JumpIfFalse,
+    LessThan,
+    Equals,
     Unknown,
     Halt,
 }
@@ -43,6 +47,10 @@ impl Instruction {
             2 => Instruction::Multiply,
             3 => Instruction::Input,
             4 => Instruction::Output,
+            5 => Instruction::JumpIfTrue,
+            6 => Instruction::JumpIfFalse,
+            7 => Instruction::LessThan,
+            8 => Instruction::Equals,
             99 => Instruction::Halt,
             _ => Instruction::Unknown,
         }
@@ -97,6 +105,16 @@ fn get_mutated_sequence(v: &mut Vec<i32>) -> &mut Vec<i32> {
             Instruction::Multiply => next_pos = mult_instruction(v, current_pos, &curr_op_code),
             Instruction::Input => next_pos = input_instruction(v, current_pos),
             Instruction::Output => next_pos = output_instruction(v, current_pos),
+            Instruction::JumpIfTrue => {
+                next_pos = jump_if_true_instruction(v, current_pos, &curr_op_code)
+            }
+            Instruction::JumpIfFalse => {
+                next_pos = jump_if_false_instruction(v, current_pos, &curr_op_code)
+            }
+            Instruction::LessThan => {
+                next_pos = less_than_instruction(v, current_pos, &curr_op_code)
+            }
+            Instruction::Equals => next_pos = equals_instruction(v, current_pos, &curr_op_code),
             _ => println!("unknown op code {:?}", curr_op_code.instruction),
         }
         current_pos = next_pos;
@@ -154,6 +172,82 @@ fn input_instruction(v: &mut Vec<i32>, current_pos: usize) -> usize {
         Err(error) => panic!(error),
     }
     current_pos + 2
+}
+
+fn jump_if_true_instruction(v: &[i32], current_pos: usize, operator: &Operator) -> usize {
+    let l_value = match operator.param1 {
+        ParameterMode::Position => v[v[current_pos + 1] as usize],
+        ParameterMode::Immediate => v[current_pos + 1],
+    };
+
+    let r_value = match operator.param2 {
+        ParameterMode::Position => v[v[current_pos + 2] as usize],
+        ParameterMode::Immediate => v[current_pos + 2],
+    };
+
+    if l_value != 0 {
+        return r_value as usize;
+    }
+    current_pos + 3
+}
+
+fn jump_if_false_instruction(v: &[i32], current_pos: usize, operator: &Operator) -> usize {
+    let l_value = match operator.param1 {
+        ParameterMode::Position => v[v[current_pos + 1] as usize],
+        ParameterMode::Immediate => v[current_pos + 1],
+    };
+
+    let r_value = match operator.param2 {
+        ParameterMode::Position => v[v[current_pos + 2] as usize],
+        ParameterMode::Immediate => v[current_pos + 2],
+    };
+
+    if l_value == 0 {
+        return r_value as usize;
+    }
+    current_pos + 3
+}
+
+fn less_than_instruction(v: &mut Vec<i32>, current_pos: usize, operator: &Operator) -> usize {
+    let l_value = match operator.param1 {
+        ParameterMode::Position => v[v[current_pos + 1] as usize],
+        ParameterMode::Immediate => v[current_pos + 1],
+    };
+
+    let r_value = match operator.param2 {
+        ParameterMode::Position => v[v[current_pos + 2] as usize],
+        ParameterMode::Immediate => v[current_pos + 2],
+    };
+
+    let output_pos = v[current_pos + 3] as usize;
+
+    if l_value < r_value {
+        v[output_pos] = 1;
+    } else {
+        v[output_pos] = 0;
+    }
+    current_pos + 4
+}
+
+fn equals_instruction(v: &mut Vec<i32>, current_pos: usize, operator: &Operator) -> usize {
+    let l_value = match operator.param1 {
+        ParameterMode::Position => v[v[current_pos + 1] as usize],
+        ParameterMode::Immediate => v[current_pos + 1],
+    };
+
+    let r_value = match operator.param2 {
+        ParameterMode::Position => v[v[current_pos + 2] as usize],
+        ParameterMode::Immediate => v[current_pos + 2],
+    };
+
+    let output_pos = v[current_pos + 3] as usize;
+
+    if l_value == r_value {
+        v[output_pos] = 1;
+    } else {
+        v[output_pos] = 0;
+    }
+    current_pos + 4
 }
 
 fn output_instruction(v: &[i32], current_pos: usize) -> usize {
